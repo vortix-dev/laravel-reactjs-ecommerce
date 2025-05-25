@@ -88,7 +88,10 @@ class CategoryController extends Controller
         $category->status = $request->status;
         $category->save();
 
-        return response()->json([],200);
+        return response()->json([
+            'status' => 200,
+            'message' => 'Category updated successfully'
+        ],200);
     }
 
     public function destroy($id)

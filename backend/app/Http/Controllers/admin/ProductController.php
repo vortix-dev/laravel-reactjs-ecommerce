@@ -15,7 +15,9 @@ class ProductController extends Controller
 {
     public function index()
     {
-        $products = Product::orderBy('created_at','DESC')->get();
+        $products = Product::orderBy('created_at','DESC')->
+                    with('product_images')
+                    ->get();
         return response()->json([
             'status' => 200,
             'products' => $products
@@ -88,7 +90,8 @@ class ProductController extends Controller
 
     public function show($id)
     {
-        $product = Product::find($id);
+        $product = Product::with('product_images')
+                    ->find($id);
 
         if($product == null){
             return response()->json([
@@ -162,6 +165,61 @@ class ProductController extends Controller
         return response()->json([
             'status' => 200,
             'message' => 'Product has been deleted successfully'
+        ],200);
+    }
+
+    public function saveProductImage(Request $request)
+    {
+        $validator = Validator::make($request->all(),[
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif'
+        ]);
+
+        if($validator->fails()) {
+            return response()->json([
+                'status' => 400,
+                'errors' => $validator->errors()
+            ],400);
+        }
+
+        $image = $request->file('image');
+        $imageName = $request->product_id.'-'.time().'.'.$image->extension();
+
+        $manager = new ImageManager(Driver::class);
+        $img = $manager->read($image->getPathName());
+        $img->scaleDown(1200);
+        $img->save(public_path('uploads/products/large/' . $imageName));
+            
+        $manager = new ImageManager(Driver::class);
+        $img = $manager->read($image->getPathName());
+        $img->coverDown(400 , 460);
+        $img->save(public_path('uploads/products/small/' . $imageName));
+
+        $productImage = new ProductImage();
+        $productImage->image = $imageName;
+        $productImage->product_id = $request->id;
+        $productImage->save();
+
+        $manager = new ImageManager(Driver::class);
+        $img = $manager->read(public_path('uploads/temp/'.$imageName));
+        $img->coverDown(400,450);
+        $img->save();
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Image has been uploaded successfully',
+            'data' => $productImage
+        ],200);
+    }
+
+    public function updateDefaultImage(Request $request)
+    {
+        $product = Product::find($request->product_id);
+        $product->image = $request->image;
+        $product->save();
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Product default image changed successfully'
         ],200);
     }
 }

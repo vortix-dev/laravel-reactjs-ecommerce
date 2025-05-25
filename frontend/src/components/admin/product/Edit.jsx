@@ -1,3 +1,4 @@
+// ... الاستيرادات تبقى كما هي
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { adminToken, apiUrl } from '../../common/http';
@@ -16,18 +17,19 @@ export const Edit = () => {
     status: 1,
     is_featured: 'no',
     gallery: [],
-    default_image: null
+    image: null
   });
+  const [disable, setDisable] = useState(false)
+  const [productImages, setProductImages] = useState([])
   const [categories, setCategories] = useState([]);
   const [imagePreview, setImagePreview] = useState([]);
   const navigate = useNavigate();
   const { id } = useParams();
 
-  // Fetch Categories
+  // ✅ جلب التصنيفات
   const fetchCategories = async () => {
     try {
       const res = await fetch(`${apiUrl}/categories`, {
-        method: 'GET',
         headers: {
           'Content-type': 'application/json',
           'Authorization': `Bearer ${adminToken()}`
@@ -41,15 +43,13 @@ export const Edit = () => {
       }
     } catch (error) {
       toast.error('Server connection error');
-      console.error('Error fetching categories:', error);
     }
   };
 
-  // Fetch Product Data
+  // ✅ جلب بيانات المنتج (تم التعديل)
   const fetchProduct = async () => {
     try {
       const res = await fetch(`${apiUrl}/products/${id}`, {
-        method: 'GET',
         headers: {
           'Content-type': 'application/json',
           'Authorization': `Bearer ${adminToken()}`
@@ -57,21 +57,22 @@ export const Edit = () => {
       });
       const result = await res.json();
       if (result.status === 200) {
+        const data = result.data;
+
+        const images = data.product_images || [];
+
         setProduct({
-          ...result.data,
-          default_image: result.data.default_image || null
+          ...data,
+          gallery: images.map((img) => img.id),
+          image: data.image || null
         });
-        // Set image previews for existing gallery
-        if (result.data.gallery && Array.isArray(result.data.gallery)) {
-          const images = result.data.gallery.map((img) => `${apiUrl}/uploads/${img}`);
-          setImagePreview(images);
-        }
+
+        setImagePreview(images.map((img) => img.image_url));
       } else {
         toast.error('Product not found!');
       }
     } catch (error) {
       toast.error('Server connection error');
-      console.error('Error fetching product:', error);
     }
   };
 
@@ -80,53 +81,53 @@ export const Edit = () => {
     fetchProduct();
   }, []);
 
-  // Handle Change
-  const handleChange = (e) => {
-    setProduct({ ...product, [e.target.name]: e.target.value });
-  };
-
-  // Handle Image Upload
-  const handleImageChange = async (e) => {
-    const files = Array.from(e.target.files);
-    let newGallery = [...product.gallery];
-    let newImagePreview = [...imagePreview];
-
-    for (let file of files) {
-      const formData = new FormData();
-      formData.append('image', file);
-
-      try {
-        const res = await fetch(`${apiUrl}/temp-image`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${adminToken()}`
-          },
-          body: formData
-        });
-        const result = await res.json();
-        if (result.status === 200) {
-          newGallery.push(result.data.id);
-          newImagePreview.push(URL.createObjectURL(file));
-        } else {
-          toast.error('Failed to upload image');
-        }
-      } catch (error) {
-        toast.error('Error uploading image');
-        console.error('Error uploading image:', error);
+  const handleFile = async (e) => {
+    const formData = new FormData()
+    const file = e.target.files[0]
+    formData.append('image',file)
+    setDisable(true)
+    const res = await fetch(`${apiUrl}/save-product-image`,{
+      method: 'POST',
+      headers: {
+        'Accept' : 'application/json',
+        'Authorization' : `Bearer ${adminToken()}`
+      },
+      body: formData
+    })
+    .then(res => res.json())
+    .then(result => {
+      if(result.status == 200){
+        productImages.push(result.data)
+        setProductImages(productImages)
+      }else{
+        toast.error(result.errors.image[0])
       }
-    }
-    console.log('Image Preview:', newImagePreview);
-    setProduct({ ...product, gallery: newGallery });
-    setImagePreview(newImagePreview);
+      setDisable(false)
+      e.target.value = ''
+    })
+  }
+
+  const handleSetDefault = async () => {
+    const res = await fetch(`${apiUrl}/change-product-default-image`,{
+      method: 'POST',
+      headers: {
+        'Accept' : 'application/json',
+        'Authorization' : `Bearer ${adminToken()}`
+      },
+    })
+    .then(res => res.json())
+    .then(result => {
+      if(result.status == 200){
+        toast.success(result.message)
+      }else{
+        console.log('Something went wrong')
+      }
+      setDisable(false)
+      e.target.value = ''
+    })
   };
 
-  // Handle Set Default Image
-  const handleSetDefault = (imageId, index) => {
-    setProduct({ ...product, default_image: imageId });
-    toast.info(`Image ${index + 1} set as default`);
-  };
-
-  // Delete Image
+  // ✅ حذف صورة من الواجهة
   const deleteImage = (index) => {
     const newImagePreview = imagePreview.filter((_, i) => i !== index);
     const newGallery = product.gallery.filter((_, i) => i !== index);
@@ -139,12 +140,11 @@ export const Edit = () => {
     toast.success('Image deleted successfully');
   };
 
-  // Handle Form Submit
+  // ✅ إرسال النموذج
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const url = `${apiUrl}/products/${id}`;
-      const res = await fetch(url, {
+      const res = await fetch(`${apiUrl}/products/${id}`, {
         method: 'PUT',
         headers: {
           'Content-type': 'application/json',
@@ -162,7 +162,6 @@ export const Edit = () => {
       }
     } catch (error) {
       toast.error('Server connection error');
-      console.error('Error updating product:', error);
     }
   };
 
@@ -179,19 +178,19 @@ export const Edit = () => {
                 <form onSubmit={handleSubmit}>
                   <div className='form-group mb-3'>
                     <label>Title</label>
-                    <input type='text' name='title' value={product.title} onChange={handleChange} className='form-control' required />
+                    <input type='text' name='title' value={product.title}  className='form-control' required />
                   </div>
                   <div className='form-group mb-3'>
                     <label>Price</label>
-                    <input type='number' name='price' value={product.price} onChange={handleChange} className='form-control' required />
+                    <input type='number' name='price' value={product.price}  className='form-control' required />
                   </div>
                   <div className='form-group mb-3'>
                     <label>Compare Price</label>
-                    <input type='number' name='compare_price' value={product.compare_price} onChange={handleChange} className='form-control' />
+                    <input type='number' name='compare_price' value={product.compare_price || ''}  className='form-control' />
                   </div>
                   <div className='form-group mb-3'>
                     <label>Category</label>
-                    <select name='category_id' value={product.category_id} onChange={handleChange} className='form-control'>
+                    <select name='category_id' value={product.category_id}  className='form-control'>
                       <option value=''>Select Category</option>
                       {categories.map((cat) => (
                         <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -200,54 +199,43 @@ export const Edit = () => {
                   </div>
                   <div className='form-group mb-3'>
                     <label>Description</label>
-                    <textarea name='description' value={product.description} onChange={handleChange} className='form-control'></textarea>
+                    <textarea name='description' value={product.description || ''}  className='form-control'></textarea>
                   </div>
                   <div className='form-group mb-3'>
                     <label>Short Description</label>
-                    <textarea name='short_description' value={product.short_description} onChange={handleChange} className='form-control'></textarea>
+                    <textarea name='short_description' value={product.short_description || ''} className='form-control'></textarea>
                   </div>
                   <div className='form-group mb-3'>
                     <label>Is Featured</label>
-                    <select name='is_featured' value={product.is_featured} onChange={handleChange} className='form-control'>
+                    <select name='is_featured' value={product.is_featured} className='form-control'>
                       <option value='no'>No</option>
                       <option value='yes'>Yes</option>
                     </select>
                   </div>
                   <div className='form-group mb-3'>
                     <label>Upload Images</label>
-                    <input type='file' multiple onChange={handleImageChange} className='form-control' />
-                    {imagePreview.length === 0 && <p className='mt-2 text-muted'>No images uploaded yet</p>}
-                    <div className='mt-2'>
-                      <div className="row">
-                        {imagePreview.map((image, index) => (
-                          <div className="col-md-3" key={index}>
-                            <div className="card shadow">
-                              <img src={image} alt="Image Preview" className="w-100" style={{ height: '150px', objectFit: 'cover' }} />
-                              <div className="card-body p-2">
-                                <button
-                                  type='button'
-                                  className={`btn btn-sm w-100 mb-2 ${product.default_image === product.gallery[index] ? 'btn-primary' : 'btn-outline-primary'}`}
-                                  onClick={() => handleSetDefault(product.gallery[index], index)}
-                                >
-                                  {product.default_image === product.gallery[index] ? 'Default' : 'Set as Default'}
-                                </button>
-                                <button
-                                  type='button'
-                                  className='btn btn-danger btn-sm w-100'
-                                  onClick={() => deleteImage(index)}
-                                >
-                                  Delete
-                                </button>
-                              </div>
-                            </div>
+                    <input type='file' multiple onChange={handleFile} className='form-control' />
+                  </div>
+
+                  <div className="mb-3">
+                    <div className="row">
+                      {imagePreview.map((image, index) => (
+                        <div className="col-md-3" key={`image-${index}`}>
+                          <div className="card shadow">
+                            <img src={image} alt={`Preview ${index}`} className='w-100' />
+                              <button type="button" className="btn btn-primary" onClick={() => handleSetDefault(image)}>
+                                {product.default_image === product.gallery[index] ? 'Default' : 'Set Default'}
+                              </button>
+                              <button type="button" className="btn btn-danger" onClick={() => deleteImage(index)}>
+                                Delete
+                              </button>
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                  <button type='submit' className='btn btn-primary'>
-                    Update Product
-                  </button>
+
+                  <button type='submit' className='btn btn-success'>Update</button>
                 </form>
               </div>
             </div>

@@ -39,7 +39,7 @@ class TempImagetController extends Controller
         $manager = new ImageManager(Driver::class);
         $img = $manager->read(public_path('uploads/temp/' . $imageName));
         $img->coverDown(400 , 450);
-        $img->save(public_path('uploads/temp/thumb' . $imageName));
+        $img->save(public_path('uploads/temp/thumb/' . $imageName));
 
         return response()->json([
             'status' => 200,

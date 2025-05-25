@@ -15,7 +15,7 @@ export const CartProvider = ({ children }) => {
         title: product.title,
         price: product.price,
         qty: 1,
-        image: product.image
+        image_url: product.image_url
       });
     } else {
       const isProductExists = updatedCart.find((item) => item.product_id === product.id);

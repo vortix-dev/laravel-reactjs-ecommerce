@@ -1,6 +1,7 @@
 import React from 'react'
 import Layout from '../common/Layout'
 import Sidebar from '../common/Sidebar'
+import { Link } from 'react-router-dom'
 
 const Dashboard = () => {
     
@@ -38,7 +39,7 @@ const Dashboard = () => {
                                     <span>Order</span>
                                 </div>
                                 <div className='card-footer'>
-                                    <a href="#">View Order</a>
+                                    <Link to="/admin/orders">View Order</Link>
                                 </div>
                             </div>
                     </div>

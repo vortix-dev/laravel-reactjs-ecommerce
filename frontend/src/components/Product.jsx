@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams } from 'react-router-dom';
-import { apiUrl, adminToken } from './common/http';
+import { apiUrl } from './common/http';
 import { toast } from 'react-toastify';
 import Layout from './common/Layout';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -101,12 +101,12 @@ export const Product = () => {
                         modules={[FreeMode, Navigation, Thumbs]}
                         className="mySwiper mt-2"
                       >
-                        {product.gallery && product.gallery.length > 0 ? (
-                          product.gallery.map((image, index) => (
+                        {product.product_images && product.product_images.length > 0 ? (
+                          product.product_images.map((img, index) => (
                             <SwiperSlide key={index}>
                               <div className="content">
                                 <img
-                                  src={`${apiUrl}/uploads/products/small/${image}`}
+                                  src={img.image_url}
                                   alt={`Product image ${index + 1}`}
                                   height={100}
                                   className="w-100"
@@ -118,7 +118,7 @@ export const Product = () => {
                           <SwiperSlide>
                             <div className="content">
                               <img
-                                src={product.image ? `${apiUrl}/uploads/products/small/${product.image}` : 'path/to/placeholder-image.jpg'}
+                                src={product.image_url}
                                 alt="Placeholder"
                                 height={100}
                                 className="w-100"
@@ -141,12 +141,12 @@ export const Product = () => {
                         modules={[FreeMode, Navigation, Thumbs]}
                         className="mySwiper2"
                       >
-                        {product.gallery && product.gallery.length > 0 ? (
-                          product.gallery.map((image, index) => (
+                        {product.product_images && product.product_images.length > 0 ? (
+                          product.product_images.map((img, index) => (
                             <SwiperSlide key={index}>
                               <div className="content">
                                 <img
-                                  src={`${apiUrl}/uploads/products/large/${image}`}
+                                  src={img.image_url.replace('/small/', '/large/')}
                                   alt={`Product image ${index + 1}`}
                                   className="w-100"
                                   style={{ height: '450px', objectFit: 'contain' }}

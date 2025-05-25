@@ -21,6 +21,10 @@ import { ToastContainer } from "react-toastify"
 import {Login as LoginUser} from './components/Login.jsx'
 import { Register } from "./components/Register"
 import Profile from "./components/Profile.jsx"
+import { Confirmation } from "./components/Confirmation.jsx"
+import ShowOrders from "./components/admin/orders/ShowOrders.jsx"
+import { OrderDetail } from "./components/admin/orders/OrderDetail.jsx"
+import MyOrders from "./components/MyOrders.jsx"
 
 
 function App() {
@@ -45,10 +49,20 @@ function App() {
               <Profile/>
             </RequireAuth>
             } />
+            <Route path="/orders" element={
+            <RequireAuth>
+              <MyOrders/>
+            </RequireAuth>
+            } />
           <Route path="/cart" element={<Cart/>} />
           <Route path="/checkout" element={
             <RequireAuth>
               <Checkout/>
+            </RequireAuth>
+            } />
+          <Route path="/order/confirmation/:id" element={
+            <RequireAuth>
+              <Confirmation/>
             </RequireAuth>
             } />
           <Route path="/product/:id" element={<Product/>} />
@@ -92,6 +106,16 @@ function App() {
             <Route path="/admin/products/edit/:id" element={
               <AdminRequireAuth>
                 <EditProduct/>
+              </AdminRequireAuth>
+            }/>
+            <Route path="/admin/orders" element={
+              <AdminRequireAuth>
+                <ShowOrders/>
+              </AdminRequireAuth>
+            }/>
+            <Route path="/admin/orders/:id" element={
+              <AdminRequireAuth>
+                <OrderDetail/>
               </AdminRequireAuth>
             }/>
         </Routes>

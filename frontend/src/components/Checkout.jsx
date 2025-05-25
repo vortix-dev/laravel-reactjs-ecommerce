@@ -3,7 +3,7 @@ import Layout from './common/Layout';
 import { useNavigate } from 'react-router-dom';
 import { CartContext } from './context/Cart';
 import { toast } from 'react-toastify';
-import { apiUrl } from './common/http';
+import { apiUrl, userToken } from './common/http';
 import { useForm } from 'react-hook-form';
 
 export const Checkout = () => {
@@ -14,54 +14,36 @@ export const Checkout = () => {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm();
 
-  const saveOrder = async (data) => {
-    setIsSubmitting(true);
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        toast.error('Please log in to place an order');
-        navigate('/login');
-        return;
-      }
-
-      const payload = {
-        name: data.name,
-        phone: data.phone,
-        address: data.address,
-        wilaya: data.wilaya,
-        payment_method: data.payment_method,
-        grand_total: grandTotal(),
-        status: 'pending',
-        cart: cartData, // cartData is already an array
-      };
-
-      const response = await fetch(`${apiUrl}/save-order`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const result = await response.json();
-      if (response.ok && result.status === 200) {
-        toast.success(result.message);
-        clearCart();
-        navigate('/orders');
-      } else {
-        toast.error(result.message || 'Failed to place order');
-      }
-    } catch (error) {
-      toast.error('An error occurred while placing the order');
-      console.error('Checkout error:', error);
-    } finally {
-      setIsSubmitting(false);
+  const saveOrder = async (formData) => {
+    const newFormData = {...formData ,
+      grand_total : grandTotal() ,
+      status : 'pending',
+      cart : cartData
     }
+    setIsSubmitting(true);
+    fetch(`${apiUrl}/save-order`,{
+      method : 'POST',
+      headers : {
+        'Content-type': 'application/json',
+        'Accept' : 'application/json',
+        'Authorization' : `Bearer ${userToken()}`
+      },
+      body : JSON.stringify(newFormData)
+    }).then(res => res.json())
+    .then(result => {
+      if(result.status == 200){
+        localStorage.removeItem('cart')
+        toast.success(result.message)
+        navigate(`/order/confirmation/${result.id}`)
+      }else{
+        toast.error(result.message)
+      }
+    })
+    
   };
 
   return (
@@ -113,34 +95,6 @@ export const Checkout = () => {
                   {errors.wilaya && <p className="text-danger">{errors.wilaya.message}</p>}
                 </div>
                 <div className="col-md-12">
-                  <h4 className="mb-3">Payment Method</h4>
-                  <div className="form-check mb-2">
-                    <input
-                      type="radio"
-                      className="form-check-input"
-                      id="cash"
-                      value="cash"
-                      {...register('payment_method', { required: 'Payment method is required' })}
-                    />
-                    <label className="form-check-label" htmlFor="cash">
-                      Cash on Delivery
-                    </label>
-                  </div>
-                  <div className="form-check mb-3">
-                    <input
-                      type="radio"
-                      className="form-check-input"
-                      id="card"
-                      value="card"
-                      {...register('payment_method')}
-                    />
-                    <label className="form-check-label" htmlFor="card">
-                      Card Payment
-                    </label>
-                  </div>
-                  {errors.payment_method && <p className="text-danger">{errors.payment_method.message}</p>}
-                </div>
-                <div className="col-md-12">
                   <button
                     type="submit"
                     className="btn btn-primary"
@@ -166,7 +120,7 @@ export const Checkout = () => {
                       <tr key={item.id}>
                         <td width={100}>
                           <img
-                            src={item.image} // Fixed from image_url
+                            src={item.image_url} // Fixed from image_url
                             alt={item.title}
                             width={80}
                             onError={(e) => (e.target.src = '/path/to/placeholder-image.jpg')}

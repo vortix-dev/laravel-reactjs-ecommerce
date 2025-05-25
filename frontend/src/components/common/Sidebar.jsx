@@ -22,19 +22,11 @@ const Sidebar = () => {
                             </li>
 
                              <li>
-                                <a href="">Orders</a>
+                                <Link to="/admin/orders">Orders</Link>
                             </li>
 
                              <li>
-                                <a href="">Users</a>
-                            </li>
-
-                             <li>
-                                <a href="">Change passeword</a>
-                            </li>
-
-                             <li>
-                                <a href="#" onClick={logout}>Logout</a>
+                                <Link href="#" onClick={logout}>Logout</Link>
                             </li>
                         </ul>
                     </div>

@@ -14,7 +14,7 @@ export const SidebarUser = () => {
                             </li>
 
                             <li>
-                                <Link to="/admin/categories">Orders</Link>
+                                <Link to="/orders">Orders</Link>
                             </li>
 
                              <li>

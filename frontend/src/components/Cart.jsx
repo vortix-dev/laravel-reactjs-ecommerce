@@ -34,14 +34,14 @@ export const Cart = () => {
                             {
                                 cartData && cartData.map(item => {
                                     return (
-                                        <tr>
+                                        <tr key={item.id}>
                                             <td width={100}>
                                                 <img src={item.image_url} alt="" width={80} />
                                             </td>
                                             <td>
                                                 <h4>{item.title}</h4>
                                                 <div className="d-flex align-items-center pt-3">
-                                                    <span>${item.price}</span>
+                                                    <span>{item.price}</span>
                                                 </div>
                                             </td>
                                             <td valign='middle'>
