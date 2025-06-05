@@ -1,6 +1,6 @@
-# 🛒 E-Commerce Platform API
+# 🛒 E-Commerce Platform API With ReactJS
 
-This project is a full-featured **E-Commerce backend API** built using **Laravel**. It supports **Admin** and **User** roles, providing complete functionality for managing products, categories, orders, and user profiles.
+This project is a full-featured **E-Commerce backend API With ReactJS** built using **Laravel**. It supports **Admin** and **User** roles, providing complete functionality for managing products, categories, orders, and user profiles.
 
 ---
 
